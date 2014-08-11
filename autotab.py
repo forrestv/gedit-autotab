@@ -23,6 +23,8 @@
 from gi.repository import GObject, Gio, Gedit
 import operator
 
+import determine
+
 # Main class
 class AutoTab(GObject.Object, Gedit.WindowActivatable):
   __gtype_name__ = "AutoTab"
@@ -31,7 +33,7 @@ class AutoTab(GObject.Object, Gedit.WindowActivatable):
   
   def do_activate(self):
     self.spaces_instead_of_tabs = False
-    self.tabs_width = 2
+    #self.tabs_width = 2
 
     # Prime the statusbar
     self.statusbar = self.window.get_statusbar()
@@ -249,54 +251,9 @@ class AutoTab(GObject.Object, Gedit.WindowActivatable):
       return
     text = doc.get_text(start, end, True)
 
-    indent_count = {'tabs':0, 2:0, 3:0, 4:0, 8:0}
-    seen_tabs = 0
-    seen_spaces = 0
-
-    for line in text.splitlines():
-      if len(line) == 0 or not line[0].isspace():
-        continue
-
-      if line[0] == '\t':
-        indent_count['tabs'] += 1
-        seen_tabs += 1
-        continue
-      elif line[0] == ' ':
-        seen_spaces += 1
-
-      indent = 0
-      for indent in range(0, len(line)):
-        if line[indent] != ' ':
-          break
-
-      for spaces in indent_count.keys():
-        if type(spaces) is not int:
-          continue
-
-        if (indent % spaces) == 0:
-          indent_count[spaces] += 1
-
-    # no indentations detected
-    if sum(indent_count.values()) == 0:
-      # if we've seen tabs or spaces, default to those
-      # can't guess at size, so using default
-      if seen_tabs or seen_spaces:
-        if seen_tabs > seen_spaces:
-          self.update_tabs(self.tabs_width, False)
-        else:
-          self.update_tabs(self.tabs_width, True)
-      return    
-
-    # Since some indentation steps may be multiples of others, we
-    # need to prioritise larger indentations when there is a tie.
-    winner = None
-
-    keys = indent_count.keys()
-    keys.sort()
-    keys.reverse()
-    for key in keys:
-      if (winner is None) or (indent_count[key] > indent_count[winner]):
-        winner = key
+    winner = determine.determine(text)
+    if winner is None:
+      return
 
     if winner == 'tabs':
       self.update_tabs(self.tabs_width, False)

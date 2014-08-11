@@ -1,7 +1,7 @@
-OUTPUTS = autotab.plugin  autotab.py
+OUTPUTS = autotab.plugin  autotab.py determine.py
 DESTDIR = ~/.local/share/gedit/plugins
 
-install: autotab.plugin  autotab.py
+install: autotab.plugin  autotab.py determine.py
 	@ [ `whoami` != "root" ] || ( echo 'Run make install as yourself, not as root.' ; exit 1 )
 	mkdir -p $(DESTDIR)
 	cp $(OUTPUTS) $(DESTDIR)
